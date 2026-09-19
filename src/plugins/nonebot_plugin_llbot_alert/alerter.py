@@ -157,7 +157,7 @@ class AlertCenter:
             "",
             "本邮件由 zhenxun 的 llbot-alert 插件自动发送。",
         ])
-        logger.warning("发送{}告警邮件: {} / {}", prefix, kind.label, target or "-")
+        logger.warning("[{}] {}：{}", prefix, kind.label, target or "-")
         return await self._send(self._config, subject=subject, body=body)
 
     async def _send_recovery(
@@ -179,5 +179,5 @@ class AlertCenter:
             "",
             "本邮件由 zhenxun 的 llbot-alert 插件自动发送。",
         ])
-        logger.info("发送恢复通知邮件: {} / {}", kind.label, target or "-")
+        logger.info("[恢复] {}：{}", kind.label, target or "-")
         return await self._send(self._config, subject=subject, body=body)

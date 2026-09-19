@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from src.plugins.nonebot_plugin_llbot_alert.config import Config
@@ -62,3 +64,68 @@ async def test_send_skips_without_smtp_host() -> None:
     """未配置 SMTP 服务器时跳过发送且不报错。"""
     config = Config(llbot_alert_to={"me@test.invalid"})
     assert await send_alert_mail(config, subject="s", body="b") is False
+
+
+@pytest.mark.asyncio
+async def test_send_times_out_without_blocking(monkeypatch: pytest.MonkeyPatch) -> None:
+    """SMTP 挂起时按超时放弃，不无限阻塞（避免拖死进程退出）。"""
+    import time
+
+    from src.plugins.nonebot_plugin_llbot_alert import mailer
+
+    def slow_send(*args: Any, **kwargs: Any) -> None:
+        _ = (args, kwargs)
+        time.sleep(0.5)
+
+    monkeypatch.setattr(mailer, "_send_sync", slow_send)
+    monkeypatch.setattr(mailer, "_SEND_GRACE", 0.01)
+    config = Config(
+        llbot_alert_to={"me@test.invalid"},
+        llbot_alert_smtp_host="smtp.test.invalid",
+        llbot_alert_smtp_timeout=0.01,
+    )
+
+    assert await mailer.send_alert_mail(config, subject="s", body="b") is False
+
+
+@pytest.mark.asyncio
+async def test_send_reports_failure_on_smtp_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SMTP 异常时返回 False 且不抛出（不影响其他事件处理）。"""
+    import smtplib
+
+    from src.plugins.nonebot_plugin_llbot_alert import mailer
+
+    def failing_send(*args: Any, **kwargs: Any) -> None:
+        _ = (args, kwargs)
+        raise smtplib.SMTPAuthenticationError(535, b"auth failed")
+
+    monkeypatch.setattr(mailer, "_send_sync", failing_send)
+    config = Config(
+        llbot_alert_to={"me@test.invalid"},
+        llbot_alert_smtp_host="smtp.test.invalid",
+    )
+
+    assert await mailer.send_alert_mail(config, subject="s", body="b") is False
+
+
+@pytest.mark.asyncio
+async def test_send_passes_configured_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """把配置的超时传给底层发送函数。"""
+    from src.plugins.nonebot_plugin_llbot_alert import mailer
+
+    captured: list[Any] = []
+
+    def spy_send(*args: Any, **kwargs: Any) -> None:
+        captured.append((args, kwargs))
+
+    monkeypatch.setattr(mailer, "_send_sync", spy_send)
+    config = Config(
+        llbot_alert_to={"me@test.invalid"},
+        llbot_alert_smtp_host="smtp.test.invalid",
+        llbot_alert_smtp_timeout=7.5,
+    )
+
+    assert await mailer.send_alert_mail(config, subject="s", body="b") is True
+    assert captured[0][0][-1] == 7.5  # 末位参数为 timeout

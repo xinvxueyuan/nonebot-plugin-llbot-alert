@@ -101,6 +101,12 @@ ignore = [
 allowed-confusables = ["，", "。", "“", "”", "：", "；", "？", "！", "【", "】", "《", "》", "…", "—", "（", "）", "、", "．"]
 
 [tool.ruff.lint.per-file-ignores]
+# NoneBot 钩子处理函数的签名注解需要真实运行时类型（注册时解析），
+# 不能移入 TYPE_CHECKING。
+"src/plugins/nonebot_plugin_llbot_alert/hooks.py" = [
+    "TC002",
+    "TC003",
+]
 "tests/**" = [
     "ARG002", "ANN201", "PLR2004", "E501", "F841", "TC002", "TC003", "TC005",
     "TRY003", "ASYNC240", "D100", "D101", "D102", "D103",

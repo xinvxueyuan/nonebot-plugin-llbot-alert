@@ -11,16 +11,16 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from typing import TYPE_CHECKING
 
 from nonebot import get_driver, logger
+
+# 注意：Bot 必须运行时导入——NoneBot 注册 on_bot_connect/on_bot_disconnect
+# 钩子时会解析处理函数的签名注解，放进 TYPE_CHECKING 会导致 NameError。
+from nonebot.adapters import Bot
 
 from .alerter import AlertCenter
 from .core import plugin_config
 from .monitor import poll_loop
-
-if TYPE_CHECKING:
-    from nonebot.adapters import Bot
 
 driver = get_driver()
 

@@ -19,7 +19,8 @@ from nonebot import logger
 if TYPE_CHECKING:
     from .config import Config
 
-_SMTP_TIMEOUT = 20.0
+#: 等待发送线程结束的额外宽限（smtplib 自身超时之外）。
+_SEND_GRACE = 5.0
 
 
 def resolve_recipients(config: Config) -> list[str]:
@@ -59,15 +60,16 @@ def _send_sync(
     config: Config,
     message: EmailMessage,
     recipients: list[str],
+    timeout: float,
 ) -> None:
     """同步发送邮件（由线程池调用）。"""
     host = config.llbot_alert_smtp_host
     port = config.llbot_alert_smtp_port
     server: smtplib.SMTP
     if config.llbot_alert_smtp_ssl:
-        server = smtplib.SMTP_SSL(host, port, timeout=_SMTP_TIMEOUT)
+        server = smtplib.SMTP_SSL(host, port, timeout=timeout)
     else:
-        server = smtplib.SMTP(host, port, timeout=_SMTP_TIMEOUT)
+        server = smtplib.SMTP(host, port, timeout=timeout)
     try:
         if config.llbot_alert_smtp_user:
             server.login(config.llbot_alert_smtp_user, config.llbot_alert_smtp_pass)
@@ -111,10 +113,19 @@ async def send_alert_mail(config: Config, *, subject: str, body: str) -> bool:
         subject=subject,
         body=body,
     )
+    timeout = max(1.0, config.llbot_alert_smtp_timeout)
     try:
-        await asyncio.to_thread(_send_sync, config, message, recipients)
+        await asyncio.wait_for(
+            asyncio.to_thread(_send_sync, config, message, recipients, timeout),
+            timeout=timeout + _SEND_GRACE,
+        )
+    except TimeoutError:
+        logger.warning(
+            "告警邮件发送超时（>{}s），已放弃本次发送", timeout + _SEND_GRACE
+        )
+        return False
     except (OSError, smtplib.SMTPException) as exc:
-        logger.exception("告警邮件发送失败: {}", exc)
+        logger.warning("告警邮件发送失败: {}", exc)
         return False
     logger.info("告警邮件已发送: {} → {}", subject, ", ".join(recipients))
     return True

@@ -50,6 +50,7 @@ uv run nb run                 # 本地运行
 | `LLBOT_ALERT_TO` | 告警邮件收件人集合 | `[]` |
 | `LLBOT_ALERT_COOLDOWN` | 同类告警最小重发间隔（秒），`0` 表示仅状态变化时发送 | `600` |
 | `LLBOT_ALERT_NOTIFY_RECOVERY` | 恢复时是否补发恢复通知 | `true` |
+| `LLBOT_ALERT_SMTP_TIMEOUT` | SMTP 连接/发送超时（秒），超时放弃本次发送 | `10` |
 | `LLBOT_ALERT_SMTP_HOST` | SMTP 服务器地址 | 空 |
 | `LLBOT_ALERT_SMTP_PORT` | SMTP 端口（SSL 通常 465） | `465` |
 | `LLBOT_ALERT_SMTP_SSL` | 是否使用 `SMTP_SSL` | `true` |
