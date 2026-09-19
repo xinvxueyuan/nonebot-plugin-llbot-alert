@@ -107,6 +107,10 @@ allowed-confusables = ["，", "。", "“", "”", "：", "；", "？", "！", "
     "TC002",
     "TC003",
 ]
+"src/plugins/nonebot_plugin_llbot_alert/heartbeat.py" = [
+    "TC002",
+    "TC003",
+]
 "tests/**" = [
     "ARG002", "ANN201", "PLR2004", "E501", "F841", "TC002", "TC003", "TC005",
     "TRY003", "ASYNC240", "D100", "D101", "D102", "D103",

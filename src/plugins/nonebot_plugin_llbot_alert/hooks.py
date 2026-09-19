@@ -1,9 +1,13 @@
-"""NoneBot 钩子：连接事件监听与账号状态轮询的编排。
+"""NoneBot 钩子：连接事件监听与心跳静默守护的编排。
 
 按 NoneBot 文档「钩子函数」：
 
 - ``driver.on_bot_connect`` —— Bot 连接至 NoneBot（LLBot 服务恢复）；
 - ``driver.on_bot_disconnect`` —— Bot 断开连接（LLBot 服务异常）。
+
+账号异常（账号下线但连接未断）**由心跳事件**（``meta_event/heartbeat`` 的
+``status.online`` / ``status.good``）驱动，见 :mod:`.heartbeat`；本模块只负责
+连接层事件与心跳静默守护任务的生命周期。
 
 """
 
@@ -20,21 +24,22 @@ from nonebot.adapters import Bot
 
 from .alerter import AlertCenter
 from .core import plugin_config
-from .monitor import poll_loop
+from .heartbeat import HeartbeatWatchdog
 
 driver = get_driver()
 
 
-class _PollingState:
-    """轮询任务与停止信号的持有者（避免模块级 ``global`` 赋值）。"""
+class _RuntimeState:
+    """告警中心、心跳守护与后台任务的持有者（避免模块级 ``global``）。"""
 
     def __init__(self) -> None:
         self.center: AlertCenter | None = None
+        self.watchdog: HeartbeatWatchdog | None = None
         self.stop: asyncio.Event | None = None
         self.task: asyncio.Task[None] | None = None
 
 
-_state = _PollingState()
+_state = _RuntimeState()
 
 
 def get_center() -> AlertCenter:
@@ -42,6 +47,13 @@ def get_center() -> AlertCenter:
     if _state.center is None:
         _state.center = AlertCenter(plugin_config)
     return _state.center
+
+
+def get_watchdog() -> HeartbeatWatchdog:
+    """返回全局心跳守护（懒加载单例）。"""
+    if _state.watchdog is None:
+        _state.watchdog = HeartbeatWatchdog(get_center())
+    return _state.watchdog
 
 
 def is_watched(bot: Bot) -> bool:
@@ -56,20 +68,27 @@ def is_watched(bot: Bot) -> bool:
 
 
 @driver.on_startup
-async def start_account_polling() -> None:
-    """插件启动时开始轮询账号状态（已在运行时忽略重复启动）。"""
+async def start_heartbeat_watchdog() -> None:
+    """插件启动时开始心跳静默检查（已在运行时忽略重复启动）。"""
     if not plugin_config.llbot_alert_enabled:
-        logger.info("llbot-alert 已停用（LLBOT_ALERT_ENABLED=false），不轮询账号状态")
+        logger.info("llbot-alert 已停用（LLBOT_ALERT_ENABLED=false），不检查心跳")
+        return
+    if plugin_config.llbot_alert_heartbeat_timeout <= 0:
+        logger.info("未启用心跳静默检测（LLBOT_ALERT_HEARTBEAT_TIMEOUT=0）")
         return
     if _state.task is not None and not _state.task.done():
         return
     _state.stop = asyncio.Event()
-    _state.task = asyncio.create_task(poll_loop(get_center(), _state.stop))
+    _state.task = asyncio.create_task(get_watchdog().run(_state.stop))
+    logger.info(
+        "llbot-alert 心跳静默守护已启动（超时 {}s）",
+        plugin_config.llbot_alert_heartbeat_timeout,
+    )
 
 
 @driver.on_shutdown
-async def stop_account_polling() -> None:
-    """插件停止时结束轮询任务。"""
+async def stop_heartbeat_watchdog() -> None:
+    """插件停止时结束心跳静默检查任务。"""
     if _state.stop is not None:
         _state.stop.set()
     task = _state.task
@@ -87,6 +106,7 @@ async def on_llbot_connected(bot: Bot) -> None:
         return
     self_id = str(getattr(bot, "self_id", "") or "")
     logger.info("LLBot 连接建立（账号 {}）", self_id or "-")
+    get_watchdog().touch(self_id)
     await get_center().report_service(self_id=self_id, healthy=True)
 
 
@@ -97,6 +117,8 @@ async def on_llbot_disconnected(bot: Bot) -> None:
         return
     self_id = str(getattr(bot, "self_id", "") or "")
     logger.warning("LLBot 连接断开（账号 {}），判定为服务异常", self_id or "-")
+    # 断开后停止对该账号的心跳静默检测，避免与连接事件重复告警。
+    get_watchdog().forget(self_id)
     await get_center().report_service(
         self_id=self_id,
         healthy=False,

@@ -14,16 +14,16 @@ class Config(BaseModel):
     """LLBot 状态告警插件配置。
 
     Attributes:
-        llbot_alert_enabled: 是否启用告警（关闭时既不轮询也不监听连接事件）。
+        llbot_alert_enabled: 是否启用告警（关闭时既不处理心跳也不监听连接事件）。
         llbot_alert_service_name: 告警文案中的服务名。
-        llbot_alert_api_url: LLBot 的 ``/get_status`` 接口地址。
-        llbot_alert_api_token: 调用该接口的 Bearer Token（留空表示不带认证）。
-        llbot_alert_api_timeout: 单次接口调用超时（秒）。
-        llbot_alert_poll_interval: 账号状态轮询间隔（秒）。
         llbot_alert_accounts: 需要监控的账号 QQ 号集合；空集合表示全部。
         llbot_alert_to: 告警邮件收件人集合。
         llbot_alert_cooldown: 同类告警的最小重发间隔（秒），防止刷邮件。
         llbot_alert_notify_recovery: 状态恢复时是否补发恢复通知。
+        llbot_alert_heartbeat_timeout: 心跳静默超时（秒）：超过该时长未收到
+            任何心跳即判定为服务异常（连接假死/事件通道阻塞）；``0`` 表示
+            不检测静默。
+        llbot_alert_check_interval: 心跳静默检查的间隔（秒）。
         llbot_alert_smtp_timeout: SMTP 连接/发送超时（秒）；超时后放弃本次
             发送，避免阻塞事件循环导致进程无法及时退出。
         llbot_alert_smtp_host: SMTP 服务器地址。
@@ -38,14 +38,12 @@ class Config(BaseModel):
 
     llbot_alert_enabled: bool = True
     llbot_alert_service_name: str = "LLBot"
-    llbot_alert_api_url: str = "http://127.0.0.1:3000/get_status"
-    llbot_alert_api_token: str = ""
-    llbot_alert_api_timeout: float = 10.0
-    llbot_alert_poll_interval: int = 60
     llbot_alert_accounts: set[int] = Field(default_factory=set)
     llbot_alert_to: set[str] = Field(default_factory=set)
     llbot_alert_cooldown: int = 600
     llbot_alert_notify_recovery: bool = True
+    llbot_alert_heartbeat_timeout: int = 60
+    llbot_alert_check_interval: int = 15
     llbot_alert_smtp_timeout: float = 10.0
     llbot_alert_smtp_host: str = ""
     llbot_alert_smtp_port: int = 465
