@@ -75,7 +75,8 @@ async def test_send_times_out_without_blocking(monkeypatch: pytest.MonkeyPatch) 
 
     def slow_send(*args: Any, **kwargs: Any) -> None:
         _ = (args, kwargs)
-        time.sleep(0.5)
+        # 配置超时下限为 1s（max(1.0, ...)），故睡眠需超过该下限才能触发超时。
+        time.sleep(2.0)
 
     monkeypatch.setattr(mailer, "_send_sync", slow_send)
     monkeypatch.setattr(mailer, "_SEND_GRACE", 0.01)
