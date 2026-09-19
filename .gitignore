@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 本地配置（含凭据，绝不入库）
+.env
+.env.dev
+.env.prod
+.env.local
+*.env.local
+
+# 运行时产物
+*.db
+*.log
+fanqie.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
