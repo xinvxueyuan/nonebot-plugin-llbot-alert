@@ -73,8 +73,11 @@ class HeartbeatWatchdog:
         self._last_seen: dict[str, datetime] = {}
 
     def touch(self, self_id: str) -> None:
-        """记录一次心跳到达。"""
+        """记录一次心跳到达（首次记录时打日志，便于确认检测链路生效）。"""
+        first_seen = self_id not in self._last_seen
         self._last_seen[self_id] = datetime.now(UTC)
+        if first_seen:
+            logger.info("已收到账号 {} 的心跳，账号状态检测链路生效", self_id or "-")
 
     def last_seen(self, self_id: str) -> datetime | None:
         """返回某账号最后一次心跳时间。"""
