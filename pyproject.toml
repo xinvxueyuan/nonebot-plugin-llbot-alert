@@ -1,7 +1,7 @@
 [project]
-name = "llbot-alert"
+name = "nonebot-plugin-llbot-alert"
 version = "0.1.0"
-description = "LLBot 状态告警插件：检测 LLBot 服务异常（OneBot 连接断开）与账号异常（账号下线），通过 SMTP 发送告警邮件"
+description = "LLBot 状态告警插件：从 OneBot 心跳抽取账号状态检测账号异常，并在连接断开/心跳静默时检测服务异常，通过 SMTP 发送告警与恢复邮件"
 keywords = ["nonebot2", "nonebot", "llbot", "onebot", "alert", "monitor"]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
@@ -26,8 +26,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xinvxueyuan/llbot-alert"
-Repository = "https://github.com/xinvxueyuan/llbot-alert"
+Homepage = "https://github.com/xinvxueyuan/nonebot-plugin-llbot-alert"
+Repository = "https://github.com/xinvxueyuan/nonebot-plugin-llbot-alert"
 
 [dependency-groups]
 dev = [

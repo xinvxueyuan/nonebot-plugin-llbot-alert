@@ -1,4 +1,4 @@
-# llbot-alert
+# nonebot-plugin-llbot-alert
 
 LLBot 状态告警插件（NoneBot2）：检测 LLBot 的**服务异常**与**账号异常**，通过
 SMTP 发送告警邮件与恢复通知。**纯后端，无前端界面**。
