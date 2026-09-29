@@ -155,7 +155,7 @@ class AlertCenter:
             f"异常原因：{reason or '（接口未提供原因）'}",
             f"检测时间：{now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
             "",
-            "本邮件由 zhenxun 的 llbot-alert 插件自动发送。",
+            "本邮件由 llbot-alert 插件自动发送。",
         ])
         logger.warning("[{}] {}：{}", prefix, kind.label, target or "-")
         return await self._send(self._config, subject=subject, body=body)
@@ -177,7 +177,7 @@ class AlertCenter:
             f"账号/服务：{target or '当前 LLBot'}",
             f"恢复时间：{now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
             "",
-            "本邮件由 zhenxun 的 llbot-alert 插件自动发送。",
+            "本邮件由 llbot-alert 插件自动发送。",
         ])
         logger.info("[恢复] {}：{}", kind.label, target or "-")
         return await self._send(self._config, subject=subject, body=body)

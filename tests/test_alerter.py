@@ -155,3 +155,22 @@ async def test_different_accounts_are_tracked_separately() -> None:
     assert await center.report_service(self_id="222", healthy=False) is True
 
     assert len(recorder.sent) == 2
+
+
+@pytest.mark.asyncio
+async def test_alert_and_recovery_bodies_do_not_mention_other_frameworks() -> None:
+    """邮件正文不应再自称 zhenxun 插件。
+
+    插件已迁出 zhenxun 生态、运行在原生 NoneBot2 上；正文若仍写
+    「由 zhenxun 的 ... 插件发送」会误导收件人排查方向。
+    告警与恢复两种邮件都要覆盖 —— 两处文案是各自硬编码的。
+    """
+    center, recorder = _center()
+
+    await center.report_service(self_id="123", healthy=False, reason="断连")
+    await center.report_service(self_id="123", healthy=True)
+
+    assert len(recorder.sent) == 2
+    for mail in recorder.sent:
+        body = mail["body"].lower()
+        assert "zhenxun" not in body, f"邮件正文仍含 zhenxun：\n{mail['body']}"
