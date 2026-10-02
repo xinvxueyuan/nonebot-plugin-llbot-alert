@@ -39,14 +39,14 @@ class AlertKind(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class BotStatus:
-    """``/get_status`` 返回的账号状态。
+    """账号状态（由心跳事件的 ``status`` 构造）。
 
     Attributes:
         online: 账号是否在线。
         good: 账号是否处于正常状态。
-        retcode: 接口返回码（非 0 或缺失表示调用异常）。
-        message: 接口返回的提示信息。
-        wording: 接口返回的附加文案（通常记录离线原因）。
+        retcode: 接口时代遗留的返回码字段，心跳路径从不填（保持 None 即无影响）。
+        message: 提示信息（如「心跳缺少 status 字段」）。
+        wording: 附加文案（通常记录离线原因）。
 
     """
 
@@ -58,7 +58,7 @@ class BotStatus:
 
     @property
     def healthy(self) -> bool:
-        """账号是否健康（在线且状态正常，且接口返回码正常）。"""
+        """账号是否健康（在线且状态正常；遗留 retcode 异常时也不健康）。"""
         if self.retcode is not None and self.retcode != _RETCODE_OK:
             return False
         return self.online and self.good

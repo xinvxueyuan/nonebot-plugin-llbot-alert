@@ -174,3 +174,24 @@ async def test_alert_and_recovery_bodies_do_not_mention_other_frameworks() -> No
     for mail in recorder.sent:
         body = mail["body"].lower()
         assert "zhenxun" not in body, f"邮件正文仍含 zhenxun：\n{mail['body']}"
+
+
+@pytest.mark.asyncio
+async def test_no_reason_fallback_speaks_heartbeat_not_http_interface() -> None:
+    """无原因时的兜底文案要说「心跳」，不能再说「接口」。
+
+    历史：账号状态最初靠轮询 ``POST /get_status`` 取得，正文因此写着
+    「（接口未提供原因）」。改用心跳抽取后那个接口已被删除，这句话会把
+    收件人引向一个不存在的机制（排查时先去找「接口」是白费功夫）。
+
+    这里走的是真实的「无原因」路径：心跳只给了 ``online``/``good`` 为假、
+    没带 message/wording，于是 ``BotStatus.reason`` 为空 → 命中兜底文案。
+    """
+    center, recorder = _center()
+
+    await center.report_account(status=BotStatus(online=False, good=False))
+
+    assert len(recorder.sent) == 1
+    body = recorder.sent[0]["body"]
+    assert "心跳未提供原因" in body, f"无原因兜底文案未改成心跳口径：\n{body}"
+    assert "接口" not in body, f"正文仍在讲已删除的 HTTP 接口：\n{body}"

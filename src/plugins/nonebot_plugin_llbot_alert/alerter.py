@@ -3,8 +3,8 @@
 两类异常分别上报：
 
 - **服务异常**（``AlertKind.SERVICE_DOWN``）：由 OneBot 连接断开触发；
-- **账号异常**（``AlertKind.ACCOUNT_OFFLINE``）：由 ``/get_status`` 显示
-  ``online``/``good`` 为假触发。
+- **账号异常**（``AlertKind.ACCOUNT_OFFLINE``）：由心跳事件的
+  ``status.online``/``status.good`` 为假触发。
 
 同一对象的同类异常在冷却期内只发一封，持续异常超过冷却期后重发提醒，
 恢复时补发恢复通知（可关闭）。
@@ -74,7 +74,7 @@ class AlertCenter:
         status: BotStatus,
         self_id: str = "",
     ) -> bool:
-        """上报 LLBot 账号状态（``/get_status`` 的结果）。"""
+        """上报 LLBot 账号状态（心跳 ``status`` 的结果）。"""
         return await self._report(
             key="account",
             kind=AlertKind.ACCOUNT_OFFLINE,
@@ -152,7 +152,7 @@ class AlertCenter:
             f"故障类型：{kind.label}",
             f"故障说明：{kind.detail}",
             f"账号/服务：{target or '当前 LLBot'}",
-            f"异常原因：{reason or '（接口未提供原因）'}",
+            f"异常原因：{reason or '（心跳未提供原因）'}",
             f"检测时间：{now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
             "",
             "本邮件由 llbot-alert 插件自动发送。",
