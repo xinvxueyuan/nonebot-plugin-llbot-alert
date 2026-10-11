@@ -31,9 +31,13 @@ __plugin_meta__ = PluginMetadata(
     config=Config,
     supported_adapters={"~onebot.v11"},
     extra={
-        # 纯后端告警插件、没有用户命令：不进菜单（详情仍能按名字查到）
+        # 进菜单（用户 2026-10-11：「图里不许缺插件」）——纯后端告警、无用户命令，
+        # 用一条「触发形态」的说明行代替，别让图里出现空挡。
         "menu_type": "系统",
-        "is_show": False,
+        "order": 40,
+        "commands": [
+            {"command": "自动告警", "desc": "掉线/心跳静默时邮件通知，后台自动触发"},
+        ],
     },
 )
 
