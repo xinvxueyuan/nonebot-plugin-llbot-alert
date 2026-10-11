@@ -30,6 +30,11 @@ __plugin_meta__ = PluginMetadata(
     type="application",
     config=Config,
     supported_adapters={"~onebot.v11"},
+    extra={
+        # 纯后端告警插件、没有用户命令：不进菜单（详情仍能按名字查到）
+        "menu_type": "系统",
+        "is_show": False,
+    },
 )
 
 # 导入即注册：NoneBot 钩子（连接事件 + 静默守护）与心跳事件响应器。
