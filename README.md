@@ -116,7 +116,7 @@ uv run pyright
 
 ### 许可证
 
-MIT（见 `pyproject.toml` 的 `license` 字段；仓库暂未附 `LICENSE` 文件）。
+MIT（见仓库根目录 `LICENSE` 文件，Copyright (c) 2026 新v学员 (xinvxueyuan)；`pyproject.toml` 的 `license` 字段同为 MIT）。
 
 ### 相关仓库
 
